@@ -1,0 +1,59 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SegmentTable } from '@/components/customers/segment-table'
+import { Card, CardContent } from '@/components/ui/card'
+import { MOCK_CUSTOMERS } from '@/lib/mock-data'
+
+export default function CustomersPage() {
+  const vip = MOCK_CUSTOMERS.filter((c) => c.tags.includes('vip'))
+  const regular = MOCK_CUSTOMERS.filter((c) => c.tags.includes('regular'))
+  const newCustomers = MOCK_CUSTOMERS.filter((c) => c.tags.includes('new'))
+  const dormant = MOCK_CUSTOMERS.filter((c) => c.tags.includes('dormant'))
+
+  const segments = [
+    { key: 'vip', label: 'VIP客', count: vip.length, color: 'text-orange-600', bg: 'border-l-4 border-l-orange-500' },
+    { key: 'regular', label: '定期客', count: regular.length, color: 'text-blue-600', bg: 'border-l-4 border-l-blue-500' },
+    { key: 'new', label: '新規客', count: newCustomers.length, color: 'text-green-600', bg: 'border-l-4 border-l-green-500' },
+    { key: 'dormant', label: '休眠客', count: dormant.length, color: 'text-gray-600', bg: 'border-l-4 border-l-gray-400' },
+  ]
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900">顧客セグメント</h2>
+        <p className="text-sm text-gray-500 mt-0.5">顧客を分類し、再来店施策に活用する</p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {segments.map((seg) => (
+          <Card key={seg.key} className={seg.bg}>
+            <CardContent className="p-4">
+              <p className="text-xs text-gray-500 mb-1">{seg.label}</p>
+              <p className={`text-2xl font-bold ${seg.color}`}>{seg.count}人</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Tabs defaultValue="vip">
+        <TabsList className="bg-white border">
+          <TabsTrigger value="vip">VIP客</TabsTrigger>
+          <TabsTrigger value="regular">定期客</TabsTrigger>
+          <TabsTrigger value="new">新規客</TabsTrigger>
+          <TabsTrigger value="dormant">休眠客</TabsTrigger>
+        </TabsList>
+        <TabsContent value="vip">
+          <SegmentTable customers={vip} />
+        </TabsContent>
+        <TabsContent value="regular">
+          <SegmentTable customers={regular} />
+        </TabsContent>
+        <TabsContent value="new">
+          <SegmentTable customers={newCustomers} />
+        </TabsContent>
+        <TabsContent value="dormant">
+          <SegmentTable customers={dormant} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
