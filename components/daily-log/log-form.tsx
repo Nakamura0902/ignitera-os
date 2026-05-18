@@ -1,21 +1,14 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Plus, X, CheckCircle, Loader2 } from 'lucide-react'
+import { Plus, Check, ChevronRight, Loader2, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
 import { submitDailyLog } from '@/lib/actions/daily-log'
-import type { IncidentType } from '@/types'
-
-interface Incident {
-  type: IncidentType
-  description: string
-}
+import { confirmHandover } from '@/lib/actions/handover'
+import type { IncidentType, Handover, Task } from '@/types'
 
 const INCIDENT_TYPES: { value: IncidentType; label: string }[] = [
   { value: 'complaint', label: 'クレーム' },
@@ -25,46 +18,73 @@ const INCIDENT_TYPES: { value: IncidentType; label: string }[] = [
   { value: 'other', label: 'その他' },
 ]
 
+interface IncidentItem {
+  type: IncidentType
+  description: string
+}
+
 interface LogFormProps {
   storeId: string
   storeName: string
-  defaultDate?: string
+  date: string
+  handovers: Handover[]
+  tasks: Task[]
 }
 
-export function LogForm({ storeId, storeName, defaultDate }: LogFormProps) {
-  const today = defaultDate ?? new Date().toISOString().split('T')[0]
-
-  const [date, setDate] = useState(today)
-  const [totalSales, setTotalSales] = useState('')
-  const [customerCount, setCustomerCount] = useState('')
+export function LogForm({ storeId, storeName, date, handovers, tasks }: LogFormProps) {
+  // 売上サマリー
+  const [sales, setSales] = useState('')
+  const [customers, setCustomers] = useState('')
   const [laborCost, setLaborCost] = useState('')
-  const [handoverNote, setHandoverNote] = useState('')
-  const [memo, setMemo] = useState('')
-  const [incidents, setIncidents] = useState<Incident[]>([])
+
+  // 引き継ぎ
+  const [confirmedHandoverIds, setConfirmedHandoverIds] = useState<Set<string>>(new Set())
+  const [newHandover, setNewHandover] = useState('')
+  const [showHandoverInput, setShowHandoverInput] = useState(false)
+
+  // 異常記録
+  const [incidentOpen, setIncidentOpen] = useState(false)
   const [incidentType, setIncidentType] = useState<IncidentType>('complaint')
   const [incidentDesc, setIncidentDesc] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const [incidents, setIncidents] = useState<IncidentItem[]>([])
+
+  // タスク
+  const [checkedTaskIds, setCheckedTaskIds] = useState<Set<string>>(new Set())
+
+  // コメント
+  const [comment, setComment] = useState('')
+
   const [error, setError] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
   const [isPending, startTransition] = useTransition()
 
-  const salesNum = Number(totalSales.replace(/,/g, '')) || 0
-  const customerNum = Number(customerCount) || 0
+  const salesNum = Number(sales.replace(/,/g, '')) || 0
+  const customersNum = Number(customers) || 0
   const laborNum = Number(laborCost.replace(/,/g, '')) || 0
-  const avgSpend = customerNum > 0 ? Math.round(salesNum / customerNum) : 0
-  const laborRate = salesNum > 0 ? ((laborNum / salesNum) * 100).toFixed(1) : '—'
+  const laborRate = salesNum > 0 ? Math.round((laborNum / salesNum) * 100) : null
+
+  const handleConfirmHandover = (id: string) => {
+    setConfirmedHandoverIds((prev) => new Set([...prev, id]))
+    confirmHandover(id).catch(() => {})
+  }
 
   const addIncident = () => {
     if (!incidentDesc.trim()) return
     setIncidents((prev) => [...prev, { type: incidentType, description: incidentDesc }])
     setIncidentDesc('')
+    setIncidentOpen(false)
   }
 
-  const removeIncident = (index: number) => {
-    setIncidents((prev) => prev.filter((_, i) => i !== index))
+  const toggleTask = (id: string) => {
+    setCheckedTaskIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
   }
 
   const handleSubmit = () => {
-    if (!totalSales) {
+    if (!sales) {
       setError('売上を入力してください')
       return
     }
@@ -75,10 +95,10 @@ export function LogForm({ storeId, storeName, defaultDate }: LogFormProps) {
           store_id: storeId,
           date,
           total_sales: salesNum,
-          customer_count: customerNum,
+          customer_count: customersNum,
           labor_cost: laborNum,
-          handover_note: handoverNote,
-          memo,
+          handover_note: newHandover,
+          memo: comment,
           incidents,
         })
         setSubmitted(true)
@@ -90,174 +110,276 @@ export function LogForm({ storeId, storeName, defaultDate }: LogFormProps) {
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-4">
-        <CheckCircle className="h-14 w-14 text-green-500" />
-        <p className="text-xl font-semibold text-gray-900">お疲れ様でした！</p>
+      <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+        <CheckCircle className="h-16 w-16 text-blue-500" />
+        <p className="text-xl font-bold text-gray-900">お疲れ様でした！</p>
         <p className="text-sm text-gray-500">{storeName}の日報を提出しました</p>
-        <Button variant="outline" onClick={() => setSubmitted(false)}>修正する</Button>
+        <button
+          onClick={() => setSubmitted(false)}
+          className="text-sm text-blue-500 underline mt-2"
+        >
+          修正する
+        </button>
       </div>
     )
   }
 
   return (
-    <div className="space-y-5">
-      {/* ① 売上サマリー */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">① 売上サマリー</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>日付</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>店舗</Label>
-              <Input value={storeName} disabled className="bg-gray-50" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>売上 (円)</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                placeholder="350,000"
-                value={totalSales}
-                onChange={(e) => setTotalSales(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>客数 (人)</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                placeholder="98"
-                value={customerCount}
-                onChange={(e) => setCustomerCount(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>人件費 (円)</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                placeholder="100,000"
-                value={laborCost}
-                onChange={(e) => setLaborCost(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-gray-400">自動計算</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
-                  客単価 ¥{avgSpend.toLocaleString('ja-JP')}
-                </div>
-                <div className={`rounded-md border px-3 py-2 text-sm font-medium ${Number(laborRate) > 32 ? 'border-red-200 bg-red-50 text-red-600' : 'border-gray-200 bg-gray-50 text-gray-600'}`}>
-                  人件費率 {laborRate}%
-                </div>
+    <div className="bg-white min-h-screen">
+      {/* ヘッダー */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <span className="text-lg font-bold text-gray-900">{storeName}</span>
+        <span className="text-sm text-gray-500 flex items-center gap-1">
+          <span>📅</span>
+          {new Date(date).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
+        </span>
+      </div>
+
+      <div className="divide-y divide-gray-100">
+        {/* ① 売上サマリー */}
+        <div className="px-4 py-5">
+          <p className="text-xs font-medium text-gray-400 mb-3">売上サマリー</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">売上</p>
+              <div className="relative">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={sales}
+                  onChange={(e) => setSales(e.target.value)}
+                  placeholder="0"
+                  className="pr-6 text-right font-semibold text-base h-10"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">円</span>
               </div>
             </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">客数</p>
+              <div className="relative">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={customers}
+                  onChange={(e) => setCustomers(e.target.value)}
+                  placeholder="0"
+                  className="pr-5 text-right font-semibold text-base h-10"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">人</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">人件費率</p>
+              <div className="relative">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={laborCost ? (laborRate !== null ? String(laborRate) : '') : ''}
+                  readOnly
+                  placeholder="—"
+                  className="pr-5 text-right font-semibold text-base h-10 bg-gray-50"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
+              </div>
+              <Input
+                type="text"
+                inputMode="numeric"
+                value={laborCost}
+                onChange={(e) => setLaborCost(e.target.value)}
+                placeholder="人件費(円)"
+                className="mt-1 text-xs h-7 text-gray-500"
+              />
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* ② 引き継ぎ */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">② 引き継ぎメモ</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            rows={3}
-            placeholder="次のシフトへの引き継ぎ事項を入力してください..."
-            value={handoverNote}
-            onChange={(e) => setHandoverNote(e.target.value)}
-          />
-        </CardContent>
-      </Card>
+        {/* ② 引き継ぎ */}
+        <div className="px-4 py-5">
+          <p className="text-xs font-medium text-gray-400 mb-3">引き継ぎ</p>
+          <div className="space-y-2">
+            {handovers.map((h) => {
+              const confirmed = confirmedHandoverIds.has(h.id)
+              return (
+                <button
+                  key={h.id}
+                  type="button"
+                  onClick={() => !confirmed && handleConfirmHandover(h.id)}
+                  className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
+                    confirmed ? 'bg-green-50' : 'bg-gray-50 hover:bg-blue-50'
+                  }`}
+                >
+                  <div className={`flex-shrink-0 h-5 w-5 rounded-full flex items-center justify-center ${
+                    confirmed ? 'bg-green-500' : 'border-2 border-gray-300'
+                  }`}>
+                    {confirmed && <Check className="h-3 w-3 text-white" />}
+                  </div>
+                  <span className={`flex-1 text-sm ${confirmed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                    {h.content}
+                  </span>
+                  {!confirmed && <ChevronRight className="h-4 w-4 text-gray-300 flex-shrink-0" />}
+                </button>
+              )
+            })}
 
-      {/* ③ 異常記録 */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">③ 異常記録</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex gap-2">
-            <Select value={incidentType} onValueChange={(v) => setIncidentType(v as IncidentType)}>
-              <SelectTrigger className="w-36 flex-shrink-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {INCIDENT_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              value={incidentDesc}
-              onChange={(e) => setIncidentDesc(e.target.value)}
-              placeholder="内容を入力..."
-              onKeyDown={(e) => e.key === 'Enter' && addIncident()}
-            />
-            <Button type="button" variant="outline" onClick={addIncident} size="icon">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          {incidents.length > 0 ? (
-            <div className="space-y-2">
-              {incidents.map((inc, i) => (
-                <div key={i} className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg p-2">
-                  <Badge variant="outline" className="text-orange-600 border-orange-300 bg-white flex-shrink-0">
-                    {INCIDENT_TYPES.find((t) => t.value === inc.type)?.label}
-                  </Badge>
-                  <span className="text-sm flex-1 text-gray-700">{inc.description}</span>
-                  <button type="button" onClick={() => removeIncident(i)}>
-                    <X className="h-4 w-4 text-gray-400 hover:text-red-400 transition-colors" />
+            {showHandoverInput ? (
+              <div className="space-y-2">
+                <Textarea
+                  rows={2}
+                  autoFocus
+                  placeholder="引き継ぎ内容を入力..."
+                  value={newHandover}
+                  onChange={(e) => setNewHandover(e.target.value)}
+                  className="text-sm"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowHandoverInput(false)}
+                    className="flex-1 py-2 text-sm text-gray-400 border border-gray-200 rounded-lg"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowHandoverInput(false)}
+                    className="flex-1 py-2 text-sm text-blue-600 border border-blue-200 rounded-lg"
+                  >
+                    追加
                   </button>
                 </div>
-              ))}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowHandoverInput(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-3 border border-dashed border-blue-300 rounded-xl text-sm text-blue-500 hover:bg-blue-50 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                追加
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ③ 異常記録 */}
+        <div className="px-4 py-5">
+          <p className="text-xs font-medium text-gray-400 mb-3">異常記録</p>
+          <div className="space-y-2">
+            {incidents.map((inc, i) => (
+              <div key={i} className="flex items-center gap-2 bg-orange-50 rounded-xl px-3 py-2.5">
+                <span className="text-xs font-medium text-orange-500 flex-shrink-0">
+                  {INCIDENT_TYPES.find((t) => t.value === inc.type)?.label}
+                </span>
+                <span className="text-sm text-gray-700 flex-1">{inc.description}</span>
+                <button type="button" onClick={() => setIncidents((p) => p.filter((_, j) => j !== i))}>
+                  <span className="text-gray-300 hover:text-red-400 text-lg leading-none">×</span>
+                </button>
+              </div>
+            ))}
+
+            {incidentOpen ? (
+              <div className="space-y-2 border border-gray-200 rounded-xl p-3">
+                <Select value={incidentType} onValueChange={(v) => setIncidentType(v as IncidentType)}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INCIDENT_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  autoFocus
+                  value={incidentDesc}
+                  onChange={(e) => setIncidentDesc(e.target.value)}
+                  placeholder="内容を入力..."
+                  onKeyDown={(e) => e.key === 'Enter' && addIncident()}
+                  className="text-sm"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setIncidentOpen(false); setIncidentDesc('') }}
+                    className="flex-1 py-2 text-sm text-gray-400 border border-gray-200 rounded-lg"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addIncident}
+                    className="flex-1 py-2 text-sm text-blue-600 border border-blue-200 rounded-lg"
+                  >
+                    記録する
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIncidentOpen(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-3 border border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:bg-gray-50 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                異常を記録
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ④ 今日のタスク */}
+        {tasks.length > 0 && (
+          <div className="px-4 py-5">
+            <p className="text-xs font-medium text-gray-400 mb-3">今日のタスク</p>
+            <div className="space-y-1">
+              {tasks.map((task) => {
+                const checked = checkedTaskIds.has(task.id)
+                return (
+                  <button
+                    key={task.id}
+                    type="button"
+                    onClick={() => toggleTask(task.id)}
+                    className="w-full flex items-center gap-3 py-2.5 px-1 text-left"
+                  >
+                    <div className={`flex-shrink-0 h-5 w-5 rounded flex items-center justify-center border-2 transition-colors ${
+                      checked ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                    }`}>
+                      {checked && <Check className="h-3 w-3 text-white" />}
+                    </div>
+                    <span className={`text-sm transition-colors ${checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+                      {task.title}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
-          ) : (
-            <p className="text-sm text-gray-400 text-center py-2">異常なし</p>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
 
-      {/* ④ ひとことコメント */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">④ ひとことコメント <span className="text-xs font-normal text-gray-400">（任意）</span></CardTitle>
-        </CardHeader>
-        <CardContent>
+        {/* ⑤ コメント */}
+        <div className="px-4 py-5">
+          <p className="text-xs font-medium text-gray-400 mb-3">コメント</p>
           <Textarea
-            rows={2}
-            placeholder="今日の運営について一言..."
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
+            rows={3}
+            placeholder="コメントを入力してください（任意）"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="text-sm resize-none border-gray-200"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {error && (
-        <p className="text-sm text-red-500 text-center">{error}</p>
-      )}
-
-      <Button
-        className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white text-base font-semibold"
-        onClick={handleSubmit}
-        disabled={isPending}
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            送信中...
-          </>
-        ) : '提出する'}
-      </Button>
+      {/* 提出ボタン */}
+      <div className="px-4 py-5">
+        {error && <p className="text-sm text-red-500 text-center mb-3">{error}</p>}
+        <Button
+          onClick={handleSubmit}
+          disabled={isPending}
+          className="w-full h-13 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl py-4"
+        >
+          {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : '提出する'}
+        </Button>
+      </div>
     </div>
   )
 }
