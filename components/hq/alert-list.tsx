@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { AlertTriangle, Info } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import type { HqAlert } from '@/lib/queries/hq'
 import { MOCK_ALERTS } from '@/lib/mock-data'
 import type { AlertSeverity } from '@/types'
 
@@ -14,17 +15,23 @@ const SEVERITY_BG: Record<AlertSeverity, string> = {
   info: 'bg-blue-50 border border-blue-200',
 }
 
-export function AlertList() {
+interface AlertListProps {
+  alerts?: HqAlert[]
+}
+
+export function AlertList({ alerts }: AlertListProps) {
+  const items = alerts ?? MOCK_ALERTS
+
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">アクティブアラート</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {MOCK_ALERTS.length === 0 ? (
+        {items.length === 0 ? (
           <p className="py-6 text-center text-sm text-gray-400">アラートはありません</p>
         ) : (
-          MOCK_ALERTS.map((alert) => (
+          items.map((alert) => (
             <div
               key={alert.id}
               className={`flex items-start gap-3 rounded-lg p-3 ${SEVERITY_BG[alert.severity]}`}

@@ -1,10 +1,31 @@
-import { Flame } from 'lucide-react'
+'use client'
+
+import { useState, useTransition } from 'react'
+import { Flame, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { signIn } from '@/lib/actions/auth'
 
 export default function LoginPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    startTransition(async () => {
+      try {
+        await signIn(email, password)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'ログインに失敗しました')
+      }
+    })
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-900">
       <div className="w-full max-w-sm px-4">
@@ -23,26 +44,39 @@ export default function LoginPage() {
               メールアドレスとパスワードを入力してください
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-gray-300">メールアドレス</Label>
-              <Input
-                type="email"
-                placeholder="your@company.com"
-                className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-gray-300">パスワード</Label>
-              <Input
-                type="password"
-                className="bg-gray-700 border-gray-600 text-white"
-              />
-            </div>
-            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
-              ログイン
-            </Button>
-            <p className="text-center text-xs text-gray-500">
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-gray-300">メールアドレス</Label>
+                <Input
+                  type="email"
+                  placeholder="your@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-gray-300">パスワード</Label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="bg-gray-700 border-gray-600 text-white"
+                />
+              </div>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'ログイン'}
+              </Button>
+            </form>
+            <p className="mt-4 text-center text-xs text-gray-500">
               パスワードをお忘れの方は管理者にお問い合わせください
             </p>
           </CardContent>

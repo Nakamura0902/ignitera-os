@@ -1,8 +1,13 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { LogList } from '@/components/daily-log/log-list'
+import { getRecentDailyLogs } from '@/lib/queries/daily-log'
 
-export default function DailyLogPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function DailyLogPage() {
+  const logs = await getRecentDailyLogs()
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -18,7 +23,7 @@ export default function DailyLogPage() {
           新規日報
         </Link>
       </div>
-      <LogList />
+      <LogList logs={logs.length > 0 ? logs : undefined} />
     </div>
   )
 }

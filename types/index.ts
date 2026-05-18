@@ -5,6 +5,7 @@ export type TaskStatus = 'open' | 'in_progress' | 'done'
 export type AlertSeverity = 'warning' | 'info'
 export type StoreStatus = 'good' | 'normal' | 'warning'
 export type CustomerTag = 'vip' | 'regular' | 'new' | 'dormant'
+export type HandoverPriority = 'high' | 'normal'
 
 export interface Organization {
   id: string
@@ -48,12 +49,28 @@ export interface DailyLog {
   author_id: string
   handover_note: string
   memo: string
+  submitted_at: string | null
   created_at: string
   incidents?: Incident[]
   author?: Profile
   store?: Store
   sales?: SalesData
   labor?: LaborData
+}
+
+export interface Handover {
+  id: string
+  org_id: string
+  store_id: string
+  author_id: string
+  content: string
+  priority: HandoverPriority
+  is_confirmed: boolean
+  confirmed_by: string | null
+  confirmed_at: string | null
+  date: string
+  created_at: string
+  author?: Profile
 }
 
 export interface SalesData {

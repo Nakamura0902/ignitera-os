@@ -1,66 +1,66 @@
-import { TrendingUp, TrendingDown, Users, AlertTriangle, DollarSign } from 'lucide-react'
+import { TrendingUp, TrendingDown, Users, AlertTriangle, DollarSign, ClipboardCheck } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import type { HqKpi } from '@/lib/queries/hq'
 import { MOCK_KPI } from '@/lib/mock-data'
 
 function TrendBadge({ value }: { value: number }) {
   const positive = value >= 0
   return (
-    <span
-      className={`flex items-center gap-0.5 text-xs font-medium ${
-        positive ? 'text-green-600' : 'text-red-500'
-      }`}
-    >
-      {positive ? (
-        <TrendingUp className="h-3 w-3" />
-      ) : (
-        <TrendingDown className="h-3 w-3" />
-      )}
-      {positive ? '+' : ''}
-      {value.toFixed(1)}%
+    <span className={`flex items-center gap-0.5 text-xs font-medium ${positive ? 'text-green-600' : 'text-red-500'}`}>
+      {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+      {positive ? '+' : ''}{value.toFixed(1)}%
     </span>
   )
 }
 
-export function KpiCards() {
-  const salesDiff =
-    ((MOCK_KPI.total_sales_today - MOCK_KPI.total_sales_yesterday) /
-      MOCK_KPI.total_sales_yesterday) *
-    100
-  const laborDiff = MOCK_KPI.avg_labor_cost_ratio - MOCK_KPI.avg_labor_cost_ratio_prev
-  const revisitDiff = MOCK_KPI.revisit_rate - MOCK_KPI.revisit_rate_prev
+interface KpiCardsProps {
+  data?: HqKpi
+}
+
+export function KpiCards({ data }: KpiCardsProps) {
+  const kpi = data ?? {
+    ...MOCK_KPI,
+    submitted_count: 2,
+    total_stores: 3,
+  }
+
+  const salesDiff = kpi.total_sales_yesterday > 0
+    ? ((kpi.total_sales_today - kpi.total_sales_yesterday) / kpi.total_sales_yesterday) * 100
+    : 0
+  const laborDiff = kpi.avg_labor_cost_ratio - kpi.avg_labor_cost_ratio_prev
 
   const cards = [
     {
       title: '本日の全店売上',
-      value: `¥${MOCK_KPI.total_sales_today.toLocaleString('ja-JP')}`,
+      value: `¥${kpi.total_sales_today.toLocaleString('ja-JP')}`,
       trend: <TrendBadge value={salesDiff} />,
-      sub: `前日 ¥${MOCK_KPI.total_sales_yesterday.toLocaleString('ja-JP')}`,
+      sub: `前日 ¥${kpi.total_sales_yesterday.toLocaleString('ja-JP')}`,
       icon: <DollarSign className="h-4 w-4 text-orange-500" />,
       accent: 'border-l-orange-500',
     },
     {
       title: '平均人件費率',
-      value: `${MOCK_KPI.avg_labor_cost_ratio}%`,
+      value: `${kpi.avg_labor_cost_ratio}%`,
       trend: <TrendBadge value={-laborDiff} />,
-      sub: `先月比 ${laborDiff > 0 ? '+' : ''}${laborDiff.toFixed(1)}pt`,
+      sub: `前日比 ${laborDiff > 0 ? '+' : ''}${laborDiff.toFixed(1)}pt`,
       icon: <Users className="h-4 w-4 text-blue-500" />,
       accent: 'border-l-blue-500',
     },
     {
-      title: '再来店率',
-      value: `${MOCK_KPI.revisit_rate}%`,
-      trend: <TrendBadge value={revisitDiff} />,
-      sub: `先月比 ${revisitDiff > 0 ? '+' : ''}${revisitDiff.toFixed(1)}pt`,
-      icon: <Users className="h-4 w-4 text-purple-500" />,
-      accent: 'border-l-purple-500',
+      title: '日報提出率',
+      value: `${kpi.submitted_count}/${kpi.total_stores}店`,
+      trend: null,
+      sub: kpi.submitted_count === kpi.total_stores ? '全店提出済み' : `未提出 ${kpi.total_stores - kpi.submitted_count}店`,
+      icon: <ClipboardCheck className="h-4 w-4 text-green-500" />,
+      accent: kpi.submitted_count === kpi.total_stores ? 'border-l-green-500' : 'border-l-yellow-500',
     },
     {
       title: 'アクティブアラート',
-      value: `${MOCK_KPI.active_alerts}件`,
+      value: `${kpi.active_alerts}件`,
       trend: null,
-      sub: '要対応あり',
+      sub: kpi.active_alerts > 0 ? '要対応あり' : '問題なし',
       icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
-      accent: MOCK_KPI.active_alerts > 0 ? 'border-l-red-500' : 'border-l-green-500',
+      accent: kpi.active_alerts > 0 ? 'border-l-red-500' : 'border-l-green-500',
     },
   ]
 
