@@ -11,7 +11,7 @@ import type { StoreStatus } from '@/types'
 const STATUS_MAP: Record<StoreStatus, { label: string; className: string }> = {
   good: { label: '好調', className: 'bg-green-100 text-green-700 hover:bg-green-100' },
   normal: { label: '通常', className: 'bg-gray-100 text-gray-600 hover:bg-gray-100' },
-  warning: { label: '要注意', className: 'bg-orange-100 text-orange-700 hover:bg-orange-100' },
+  warning: { label: '要注意', className: 'bg-amber-100 text-amber-700 hover:bg-amber-100' },
 }
 
 interface StoreComparisonTableProps {
@@ -42,7 +42,7 @@ export function StoreComparisonTable({ stores }: StoreComparisonTableProps) {
           </TableHeader>
           <TableBody>
             {rows.map((store) => (
-              <TableRow key={store.id} className={store.status === 'warning' ? 'border-l-2 border-l-orange-400' : ''}>
+              <TableRow key={store.id} className={store.status === 'warning' ? 'border-l-2 border-l-amber-400' : ''}>
                 <TableCell className="font-medium">{store.name}</TableCell>
                 <TableCell className="text-right">
                   ¥{store.today_sales.toLocaleString('ja-JP')}

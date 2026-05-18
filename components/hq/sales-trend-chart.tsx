@@ -32,7 +32,7 @@ export function SalesTrendChart() {
               onClick={() => setSelected('__total__')}
               className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
                 selected === '__total__'
-                  ? 'bg-gray-900 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
               }`}
             >
@@ -44,7 +44,7 @@ export function SalesTrendChart() {
                 onClick={() => setSelected(store.id)}
                 className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
                   selected === store.id
-                    ? 'bg-gray-900 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >

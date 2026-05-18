@@ -6,12 +6,12 @@ import { MOCK_ALERTS } from '@/lib/mock-data'
 import type { AlertSeverity } from '@/types'
 
 const SEVERITY_ICONS: Record<AlertSeverity, ReactNode> = {
-  warning: <AlertTriangle className="h-4 w-4 text-orange-500 flex-shrink-0 mt-0.5" />,
+  warning: <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />,
   info: <Info className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />,
 }
 
 const SEVERITY_BG: Record<AlertSeverity, string> = {
-  warning: 'bg-orange-50 border border-orange-200',
+  warning: 'bg-amber-50 border border-amber-200',
   info: 'bg-blue-50 border border-blue-200',
 }
 

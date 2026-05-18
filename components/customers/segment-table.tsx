@@ -17,7 +17,7 @@ const TAG_LABELS: Record<CustomerTag, string> = {
 }
 
 const TAG_COLORS: Record<CustomerTag, string> = {
-  vip: 'bg-orange-100 text-orange-700',
+  vip: 'bg-blue-100 text-blue-700',
   regular: 'bg-blue-100 text-blue-700',
   new: 'bg-green-100 text-green-700',
   dormant: 'bg-gray-100 text-gray-600',

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Flame, Loader2 } from 'lucide-react'
+import Image from 'next/image'
+import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,19 +28,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-900">
+    <div className="flex min-h-screen items-center justify-center bg-white">
       <div className="w-full max-w-sm px-4">
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Flame className="h-8 w-8 text-orange-400" />
-            <span className="text-2xl font-bold text-white">Ignitera OS</span>
-          </div>
+          <Image
+            src="/ignitera-logo.png"
+            alt="Ignitera"
+            width={160}
+            height={48}
+            className="h-10 w-auto object-contain"
+          />
           <p className="text-sm text-gray-400">店舗運営を、データで磨く。</p>
         </div>
 
-        <Card className="border-gray-700 bg-gray-800">
+        <Card className="border-gray-100 shadow-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="text-white text-lg">ログイン</CardTitle>
+            <CardTitle className="text-gray-900 text-lg">ログイン</CardTitle>
             <CardDescription className="text-gray-400">
               メールアドレスとパスワードを入力してください
             </CardDescription>
@@ -47,36 +51,36 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-gray-300">メールアドレス</Label>
+                <Label className="text-gray-600">メールアドレス</Label>
                 <Input
                   type="email"
                   placeholder="your@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
+                  className="border-gray-200"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-gray-300">パスワード</Label>
+                <Label className="text-gray-600">パスワード</Label>
                 <Input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="border-gray-200"
                 />
               </div>
-              {error && <p className="text-sm text-red-400">{error}</p>}
+              {error && <p className="text-sm text-red-500">{error}</p>}
               <Button
                 type="submit"
                 disabled={isPending}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'ログイン'}
               </Button>
             </form>
-            <p className="mt-4 text-center text-xs text-gray-500">
+            <p className="mt-4 text-center text-xs text-gray-400">
               パスワードをお忘れの方は管理者にお問い合わせください
             </p>
           </CardContent>

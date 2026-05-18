@@ -56,7 +56,7 @@ export function LogList({ logs }: LogListProps) {
                     {incidentCount > 0 && (
                       <div className="flex gap-1.5 mt-2 flex-wrap">
                         {log.incidents!.map((inc, i) => (
-                          <Badge key={i} variant="outline" className="text-orange-600 border-orange-300 bg-orange-50 text-xs">
+                          <Badge key={i} variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 text-xs">
                             {INCIDENT_TYPE_LABELS[inc.type] ?? inc.type}
                           </Badge>
                         ))}
@@ -77,7 +77,7 @@ export function LogList({ logs }: LogListProps) {
                     )}
                     <div className="flex justify-end mt-1.5">
                       {incidentCount > 0 ? (
-                        <AlertTriangle className="h-4 w-4 text-orange-400" />
+                        <AlertTriangle className="h-4 w-4 text-amber-400" />
                       ) : isSubmitted ? (
                         <CheckCircle className="h-4 w-4 text-green-400" />
                       ) : (

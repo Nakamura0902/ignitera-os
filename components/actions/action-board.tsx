@@ -8,16 +8,16 @@ import type { TaskStatus } from '@/types'
 
 const COLUMNS: { status: TaskStatus; label: string; topColor: string }[] = [
   { status: 'open', label: '未着手', topColor: 'border-t-gray-400' },
-  { status: 'in_progress', label: '進行中', topColor: 'border-t-orange-500' },
-  { status: 'done', label: '完了', topColor: 'border-t-green-500' },
+  { status: 'in_progress', label: '進行中', topColor: 'border-t-blue-500' },
+  { status: 'done', label: '完了', topColor: 'border-t-blue-300' },
 ]
 
 const CATEGORY_COLORS: Record<string, string> = {
   人材育成: 'bg-blue-100 text-blue-700',
-  原価管理: 'bg-purple-100 text-purple-700',
-  シフト管理: 'bg-green-100 text-green-700',
-  メニュー: 'bg-yellow-100 text-yellow-700',
-  接客: 'bg-pink-100 text-pink-700',
+  原価管理: 'bg-blue-100 text-blue-700',
+  シフト管理: 'bg-blue-100 text-blue-700',
+  メニュー: 'bg-blue-100 text-blue-700',
+  接客: 'bg-blue-100 text-blue-700',
 }
 
 export function ActionBoard() {

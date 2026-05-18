@@ -72,7 +72,7 @@ export default async function DailyLogDetailPage({ params }: Props) {
                   <div key={i} className="flex items-start gap-2">
                     <Badge
                       variant="outline"
-                      className="text-orange-600 border-orange-300 bg-orange-50 mt-0.5 flex-shrink-0"
+                      className="text-blue-600 border-blue-200 bg-blue-50 mt-0.5 flex-shrink-0"
                     >
                       {INCIDENT_TYPE_LABELS[inc.type] ?? inc.type}
                     </Badge>

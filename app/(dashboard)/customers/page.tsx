@@ -10,10 +10,10 @@ export default function CustomersPage() {
   const dormant = MOCK_CUSTOMERS.filter((c) => c.tags.includes('dormant'))
 
   const segments = [
-    { key: 'vip', label: 'VIP客', count: vip.length, color: 'text-orange-600', bg: 'border-l-4 border-l-orange-500' },
+    { key: 'vip', label: 'VIP客', count: vip.length, color: 'text-blue-700', bg: 'border-l-4 border-l-blue-700' },
     { key: 'regular', label: '定期客', count: regular.length, color: 'text-blue-600', bg: 'border-l-4 border-l-blue-500' },
-    { key: 'new', label: '新規客', count: newCustomers.length, color: 'text-green-600', bg: 'border-l-4 border-l-green-500' },
-    { key: 'dormant', label: '休眠客', count: dormant.length, color: 'text-gray-600', bg: 'border-l-4 border-l-gray-400' },
+    { key: 'new', label: '新規客', count: newCustomers.length, color: 'text-blue-400', bg: 'border-l-4 border-l-blue-300' },
+    { key: 'dormant', label: '休眠客', count: dormant.length, color: 'text-gray-600', bg: 'border-l-4 border-l-gray-300' },
   ]
 
   return (

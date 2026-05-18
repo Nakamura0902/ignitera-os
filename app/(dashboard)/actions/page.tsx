@@ -10,7 +10,7 @@ export default function ActionsPage() {
           <h2 className="text-lg font-semibold text-gray-900">改善アクションセンター</h2>
           <p className="text-sm text-gray-500 mt-0.5">課題から施策・実行・効果検証まで一元管理</p>
         </div>
-        <Button className="bg-orange-500 hover:bg-orange-600 text-white">
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
           <Plus className="h-4 w-4 mr-1.5" />
           新規アクション
         </Button>
