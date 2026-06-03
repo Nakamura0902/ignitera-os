@@ -1,13 +1,18 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import { StoreContext, STORES, type StoreItem } from '@/hooks/use-store'
+import { StoreContext, type StoreItem } from '@/hooks/use-store'
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+interface StoreProviderProps {
+  children: ReactNode
+  stores: StoreItem[]
+}
+
+export function StoreProvider({ children, stores }: StoreProviderProps) {
   const [selectedStore, setSelectedStore] = useState<StoreItem | null>(null)
 
   return (
-    <StoreContext.Provider value={{ selectedStore, setSelectedStore, stores: STORES }}>
+    <StoreContext.Provider value={{ selectedStore, setSelectedStore, stores }}>
       {children}
     </StoreContext.Provider>
   )

@@ -46,6 +46,63 @@ interface LaborRow { store_id: string; labor_cost_ratio: number }
 interface LogRow { store_id: string; submitted_at: string | null }
 interface TaskRow { store_id: string; due_date: string | null; status: string }
 
+export interface SalesTrendStore {
+  id: string
+  name: string
+  color: string
+  data: number[]
+}
+
+export interface SalesTrendData {
+  labels: string[]
+  stores: SalesTrendStore[]
+}
+
+const STORE_COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444']
+
+export async function getSalesTrend(orgId: string): Promise<SalesTrendData> {
+  const supabase = await createClient()
+  const today = new Date()
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = subDays(today, 6 - i)
+    return format(d, 'yyyy-MM-dd')
+  })
+  const labels = days.map((d) => {
+    const [, m, day] = d.split('-')
+    return `${parseInt(m)}/${parseInt(day)}`
+  })
+
+  const { data: stores } = await supabase
+    .from('stores')
+    .select('id, name')
+    .eq('org_id', orgId)
+    .order('name')
+
+  if (!stores || stores.length === 0) return { labels, stores: [] }
+
+  const { data: salesRaw } = await supabase
+    .from('sales_data')
+    .select('store_id, date, total_sales')
+    .in('store_id', stores.map((s: { id: string }) => s.id))
+    .gte('date', days[0])
+    .lte('date', days[6])
+
+  const salesMap = new Map<string, number>()
+  for (const row of (salesRaw ?? []) as { store_id: string; date: string; total_sales: number }[]) {
+    salesMap.set(`${row.store_id}__${row.date}`, row.total_sales)
+  }
+
+  return {
+    labels,
+    stores: (stores as { id: string; name: string }[]).map((store, i) => ({
+      id: store.id,
+      name: store.name,
+      color: STORE_COLORS[i % STORE_COLORS.length],
+      data: days.map((d) => salesMap.get(`${store.id}__${d}`) ?? 0),
+    })),
+  }
+}
+
 export async function getHqDashboard(date?: string): Promise<HqDashboardData | null> {
   const supabase = await createClient()
 

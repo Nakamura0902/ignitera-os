@@ -2,7 +2,6 @@ import type { ReactNode } from 'react'
 import { AlertTriangle, Info } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { HqAlert } from '@/lib/queries/hq'
-import { MOCK_ALERTS } from '@/lib/mock-data'
 import type { AlertSeverity } from '@/types'
 
 const SEVERITY_ICONS: Record<AlertSeverity, ReactNode> = {
@@ -20,7 +19,7 @@ interface AlertListProps {
 }
 
 export function AlertList({ alerts }: AlertListProps) {
-  const items = alerts ?? MOCK_ALERTS
+  const items = alerts ?? []
 
   return (
     <Card>

@@ -14,12 +14,24 @@ const navItems = [
   { href: '/customers', icon: Users, label: '顧客セグメント' },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  userName: string
+  userRole: string
+}
+
+export function Sidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname()
+  const initial = userName.charAt(0) || '?'
+
+  const roleLabel: Record<string, string> = {
+    hq: '本部管理者',
+    sv: 'スーパーバイザー',
+    manager: '店長',
+    staff: 'スタッフ',
+  }
 
   return (
     <aside className="flex h-full w-60 flex-col flex-shrink-0" style={{ backgroundColor: '#1e3a6e' }}>
-      {/* ロゴ */}
       <div className="flex h-16 items-center px-5 border-b border-white/10">
         <Image
           src="/ignitera-logo.png"
@@ -31,7 +43,6 @@ export function Sidebar() {
         />
       </div>
 
-      {/* ナビ */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href)
@@ -53,15 +64,14 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* ユーザー */}
       <div className="border-t border-white/10 p-4">
         <div className="flex items-center gap-3 px-2 py-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white flex-shrink-0">
-            田
+            {initial}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-medium text-white">田中 太郎</p>
-            <p className="truncate text-xs text-white/50">本部管理者</p>
+            <p className="truncate text-sm font-medium text-white">{userName || '—'}</p>
+            <p className="truncate text-xs text-white/50">{roleLabel[userRole] ?? userRole}</p>
           </div>
         </div>
       </div>

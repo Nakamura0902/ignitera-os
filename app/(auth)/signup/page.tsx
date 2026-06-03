@@ -4,31 +4,57 @@ import { Suspense, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Mail } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { signIn, signInWithGoogle } from '@/lib/actions/auth'
+import { signUp, signInWithGoogle } from '@/lib/actions/auth'
 
-function LoginForm() {
+function SignupForm() {
   const searchParams = useSearchParams()
+  const isVerify = searchParams.get('verify') === '1'
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(
-    searchParams.get('error') ? 'ログインに失敗しました。もう一度お試しください。' : null
-  )
+  const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [isGooglePending, startGoogleTransition] = useTransition()
+
+  if (isVerify) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="w-full max-w-sm px-4 text-center">
+          <div className="mb-6 flex justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+              <Mail className="h-8 w-8 text-blue-600" />
+            </div>
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900">確認メールを送信しました</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            {email || 'ご登録のメールアドレス'}に確認リンクを送りました。
+            <br />メールを確認してアカウントを有効化してください。
+          </p>
+          <Link href="/login" className="mt-6 inline-block text-sm text-blue-600 hover:underline">
+            ログインページへ戻る
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    if (password.length < 8) {
+      setError('パスワードは8文字以上で入力してください')
+      return
+    }
     startTransition(async () => {
       try {
-        await signIn(email, password)
+        await signUp(email, password)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'ログインに失敗しました')
+        setError(err instanceof Error ? err.message : '登録に失敗しました')
       }
     })
   }
@@ -60,9 +86,9 @@ function LoginForm() {
 
         <Card className="border-gray-100 shadow-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="text-gray-900 text-lg">ログイン</CardTitle>
+            <CardTitle className="text-gray-900 text-lg">新規登録</CardTitle>
             <CardDescription className="text-gray-400">
-              アカウントにサインインしてください
+              無料でアカウントを作成してください
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -83,7 +109,7 @@ function LoginForm() {
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                   </svg>
-                  Googleでログイン
+                  Googleで登録
                 </>
               )}
             </Button>
@@ -110,7 +136,7 @@ function LoginForm() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-gray-600">パスワード</Label>
+                <Label className="text-gray-600">パスワード（8文字以上）</Label>
                 <Input
                   type="password"
                   value={password}
@@ -125,14 +151,14 @@ function LoginForm() {
                 disabled={isPending || isGooglePending}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
-                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'ログイン'}
+                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'アカウントを作成'}
               </Button>
             </form>
 
             <p className="text-center text-xs text-gray-400">
-              アカウントをお持ちでない方は{' '}
-              <Link href="/signup" className="text-blue-600 hover:underline">
-                新規登録
+              すでにアカウントをお持ちの方は{' '}
+              <Link href="/login" className="text-blue-600 hover:underline">
+                ログイン
               </Link>
             </p>
           </CardContent>
@@ -142,10 +168,10 @@ function LoginForm() {
   )
 }
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <Suspense>
-      <LoginForm />
+      <SignupForm />
     </Suspense>
   )
 }
