@@ -1,7 +1,6 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 
 export async function signIn(email: string, password: string) {
@@ -13,14 +12,13 @@ export async function signIn(email: string, password: string) {
 
 export async function signUp(email: string, password: string) {
   const supabase = await createClient()
-  const headersList = await headers()
-  const origin = headersList.get('origin') ?? ''
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/callback`,
+      // Supabase ダッシュボードの Site URL にリダイレクト
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('.supabase.co', '.vercel.app') ?? ''}/auth/callback`,
     },
   })
   if (error) throw new Error(error.message)
@@ -29,13 +27,13 @@ export async function signUp(email: string, password: string) {
 
 export async function signInWithGoogle() {
   const supabase = await createClient()
-  const headersList = await headers()
-  const origin = headersList.get('origin') ?? ''
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${siteUrl}/auth/callback`,
     },
   })
   if (error) throw new Error(error.message)
