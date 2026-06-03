@@ -23,24 +23,8 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // JWT のみチェック（DB クエリなし）
-  const { data: { user } } = await supabase.auth.getUser()
-  const { pathname } = request.nextUrl
-
-  const isPublicPath =
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/signup') ||
-    pathname.startsWith('/auth/')
-
-  // 未認証 → ログインへ
-  if (!user && !isPublicPath && pathname !== '/onboarding') {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  // 認証済みで公開ページ → ダッシュボードへ
-  if (user && isPublicPath && !pathname.startsWith('/auth/')) {
-    return NextResponse.redirect(new URL('/hq', request.url))
-  }
+  // セッションクッキーをリフレッシュするだけ（DB クエリなし）
+  await supabase.auth.getSession()
 
   return supabaseResponse
 }
