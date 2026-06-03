@@ -23,29 +23,21 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // JWT のみチェック（DB クエリなし）
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  const isPublicPath = pathname.startsWith('/login') ||
+  const isPublicPath =
+    pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/auth/')
 
-  if (!user && !isPublicPath) {
+  // 未認証 → ログインへ
+  if (!user && !isPublicPath && pathname !== '/onboarding') {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (user && !isPublicPath && pathname !== '/onboarding') {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('org_id')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.org_id) {
-      return NextResponse.redirect(new URL('/onboarding', request.url))
-    }
-  }
-
+  // 認証済みで公開ページ → ダッシュボードへ
   if (user && isPublicPath && !pathname.startsWith('/auth/')) {
     return NextResponse.redirect(new URL('/hq', request.url))
   }
@@ -54,5 +46,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|ignitera-logo.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|ignitera-logo.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }
