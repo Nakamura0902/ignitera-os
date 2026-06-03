@@ -51,22 +51,16 @@ function SignupForm() {
       return
     }
     startTransition(async () => {
-      try {
-        await signUp(email, password)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '登録に失敗しました')
-      }
+      const result = await signUp(email, password)
+      if (result?.error) setError(result.error)
     })
   }
 
   const handleGoogle = () => {
     setError(null)
     startGoogleTransition(async () => {
-      try {
-        await signInWithGoogle()
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Googleログインに失敗しました')
-      }
+      const result = await signInWithGoogle()
+      if (result?.error) setError(result.error)
     })
   }
 

@@ -25,22 +25,16 @@ function LoginForm() {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      try {
-        await signIn(email, password)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'ログインに失敗しました')
-      }
+      const result = await signIn(email, password)
+      if (result?.error) setError(result.error)
     })
   }
 
   const handleGoogle = () => {
     setError(null)
     startGoogleTransition(async () => {
-      try {
-        await signInWithGoogle()
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Googleログインに失敗しました')
-      }
+      const result = await signInWithGoogle()
+      if (result?.error) setError(result.error)
     })
   }
 

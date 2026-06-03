@@ -3,32 +3,31 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-export async function signIn(email: string, password: string) {
+export async function signIn(email: string, password: string): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw new Error(error.message)
+  if (error) return { error: error.message }
   redirect('/hq')
 }
 
-export async function signUp(email: string, password: string) {
+export async function signUp(email: string, password: string): Promise<{ error?: string }> {
   const supabase = await createClient()
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ignitera-os-rouge.vercel.app'
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      // Supabase ダッシュボードの Site URL にリダイレクト
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('.supabase.co', '.vercel.app') ?? ''}/auth/callback`,
+      emailRedirectTo: `${siteUrl}/auth/callback`,
     },
   })
-  if (error) throw new Error(error.message)
+  if (error) return { error: error.message }
   redirect('/signup?verify=1')
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(): Promise<{ error?: string }> {
   const supabase = await createClient()
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ignitera-os-rouge.vercel.app'
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -36,8 +35,9 @@ export async function signInWithGoogle() {
       redirectTo: `${siteUrl}/auth/callback`,
     },
   })
-  if (error) throw new Error(error.message)
+  if (error) return { error: error.message }
   if (data.url) redirect(data.url)
+  return {}
 }
 
 export async function signOut() {

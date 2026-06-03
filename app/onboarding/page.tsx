@@ -41,17 +41,14 @@ export default function OnboardingPage() {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
-      try {
-        await createOrgAndStore({
-          orgName,
-          storeName,
-          industry,
-          region,
-          seats: parseInt(seats) || 0,
-        })
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '設定に失敗しました')
-      }
+      const result = await createOrgAndStore({
+        orgName,
+        storeName,
+        industry,
+        region,
+        seats: parseInt(seats) || 0,
+      })
+      if (result?.error) setError(result.error)
     })
   }
 
